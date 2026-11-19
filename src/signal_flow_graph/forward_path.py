@@ -27,11 +27,11 @@ def get_forward_paths(Graph_info: tuple) -> list:
             paths.append((path_now, gain_now))
             continue
 
-        for neigbour, gain in graph[node]:
+        for neighbour, gain in graph[node]:
             # check cycles on this path only
-            if neigbour in path_now:
+            if neighbour in path_now:
                 continue
-            stack.append((neigbour, [path_now + [neigbour]], gain_now * gain))
+            stack.append((neighbour, path_now + [neighbour], gain_now * gain))
 
     return paths
 
