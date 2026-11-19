@@ -1,6 +1,10 @@
-from signal_flow_graph.forward_path import graph_repr, get_forward_paths
+from PySide6.QtWidgets import QApplication
+from src.ui.signal_flow_graph_ui import SignalFlowGraph
 
-graph = graph_repr(input_gui)
-paths = get_forward_paths(graph)
+app = QApplication()
 
-# edit here the input_gui
+window = SignalFlowGraph()
+
+window.show()
+
+app.exec()
