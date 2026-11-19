@@ -207,7 +207,7 @@ class SignalFlowGraph(QMainWindow):
                 raise ValueError
         except ValueError:
             self.nodes_number.clear()
-            self.nodes_number.setPlaceholderText("Only nonzero positive integers are acceptable.")
+            self.nodes_number.setPlaceholderText("Only nonzero positive integers.")
             return
 
         try:
@@ -216,12 +216,12 @@ class SignalFlowGraph(QMainWindow):
                 raise ValueError
         except ValueError:
             self.goal_input.clear()
-            self.goal_input.setPlaceholderText("Only nonzero positive integers are acceptable.")
+            self.goal_input.setPlaceholderText("Only nonzero positive integers.")
             return
 
         if self.goal > number:
             self.goal_input.clear()
-            self.goal_input.setPlaceholderText("Goal must be equal or smaller than the number of nodes.")
+            self.goal_input.setPlaceholderText("Goal must be > or = number of nodes.")
             return
 
         self.scene.clear()
