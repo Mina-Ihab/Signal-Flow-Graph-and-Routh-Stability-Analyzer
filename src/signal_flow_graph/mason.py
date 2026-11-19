@@ -25,9 +25,9 @@ def compute_delta(loops: list[dict], non_touching: dict[int, list[dict]]) -> tup
         sub_terms.append(f"{sign} ({' + '.join(f'{g['product_gain']:g}' for g in groups)})")
 
     steps = (
-        f"Δ = {' '.join(sym_terms)}\n"
-        f"Δ = {' '.join(sub_terms)}\n"
-        f"Δ = {delta_val:g}"
+        f"Delta = {' '.join(sym_terms)}\n"
+        f"Delta = {' '.join(sub_terms)}\n"
+        f"Delta = {delta_val:g}"
     )
     return delta_val, steps
 
@@ -47,7 +47,7 @@ def solve_mason(adj: dict[str, list[tuple[str, str, float]]], forward_paths: lis
     delta_val, delta_steps = compute_delta(loops, non_touching)
 
     if delta_val == 0:
-        raise ValueError("Graph determinant Δ is zero; overall transfer function T(s) is undefined.")
+        raise ValueError("Graph determinant is zero; overall transfer function T(s) is undefined.")
 
     cofactors = []
     numerator_val = 0.0
@@ -62,7 +62,7 @@ def solve_mason(adj: dict[str, list[tuple[str, str, float]]], forward_paths: lis
         di_val, di_steps = compute_delta(untouched_loops, untouched_nt)
 
         cofactors.append({
-            "label": f"Δ{idx}",
+            "label": f"Delta_{idx}",
             "value": di_val,
             "steps": di_steps.replace("Δ =", f"Δ{idx} ="),
         })
@@ -70,12 +70,12 @@ def solve_mason(adj: dict[str, list[tuple[str, str, float]]], forward_paths: lis
         mi_val = path["total_gain"]
         mi_label = path.get("label", f"M{idx}")
         numerator_val += mi_val * di_val
-        num_sym_terms.append(f"{mi_label}·Δ{idx}")
-        num_sub_terms.append(f"({mi_val:g} × {di_val:g})")
+        num_sym_terms.append(f"{mi_label} * Delta{idx}")
+        num_sub_terms.append(f"({mi_val:g} * {di_val:g})")
 
     transfer_val = numerator_val / delta_val
     mason_steps = (
-        f"T(s) = ({' + '.join(num_sym_terms)}) / Δ\n"
+        f"T(s) = ({' + '.join(num_sym_terms)}) / Delta\n"
         f"T(s) = ({' + '.join(num_sub_terms)}) / {delta_val:g}\n"
         f"T(s) = {numerator_val:g} / {delta_val:g} = {transfer_val:g}"
     )
