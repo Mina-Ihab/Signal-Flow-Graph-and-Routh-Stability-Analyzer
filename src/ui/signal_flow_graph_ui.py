@@ -145,6 +145,9 @@ class SignalFlowGraph(QMainWindow):
 
         # Graph Editor
 
+        self.goal = None
+        self.gain_window = None
+        self.gain = None
         self.animations = []
         self.selected_nodes = []
         self.graph_structure = []
