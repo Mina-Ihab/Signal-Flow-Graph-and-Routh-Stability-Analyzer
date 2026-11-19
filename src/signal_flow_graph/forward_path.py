@@ -8,7 +8,10 @@ def graph_repr(List_edge_nodes: list) -> tuple:
         if b is None:
             goal = a
             continue
-        graph[a].append((b,c))
+        if b not in graph:
+            graph[b] = []
+
+        graph[a].append((b, f"{a}->{b}", c))
 
     return graph, source, goal
 
@@ -24,10 +27,13 @@ def get_forward_paths(Graph_info: tuple) -> list:
         node, path_now, gain_now = stack.pop()
         # if goal reached add the path and the goal and gain
         if node == goal:
-            paths.append((path_now, gain_now))
+            paths.append({
+                "nodes": path_now,
+                "total_gain": gain_now
+            })
             continue
 
-        for neighbour, gain in graph[node]:
+        for neighbour, branch_name, gain in graph[node]:
             # check cycles on this path only
             if neighbour in path_now:
                 continue
