@@ -2,37 +2,45 @@ class RSC :
 
     def __init__(self,equation:str):
 
-        self.equation = self.parser(equation)    
+        self.coffs , self.powers = self.parser(equation)    
+
  
     def parser(self,equation:str):
 
-        result = []
+        coffs = []
+        powers = []
         splitted = equation.split(" ")
     
-        for i in splitted:
-    
-            if i == '+' or i == '-' :
+        for i in range(len(splitted) - 1, -1, -1):    
+        
+            if splitted[i] == '+' or splitted[i] == '-' :
                 continue
 
             coff = 1.0
             power = 1
 
-            if i.find("x") == -1:
+            if splitted[i].find("x") == -1:
                 power = 0
                 coff = float(i)
 
             else:
             
-                if i.find("*x") != -1 :
+                if splitted[i].find("*x") != -1 :
 
-                    coff = float(i.split("*x")[0])
+                    coff = float(splitted[i].split("*x")[0])
 
-                if i.find("x**") != -1 :
+                if splitted[i].find("x**") != -1 :
 
                     try:
-                        power = int(i.split("x**")[1])
+                        power = int(splitted[i].split("x**")[1])
                     except:
                         raise ValueError("integer power only are vaild")
-            
-            result.append([coff,power])
-        return result
+
+            coffs.append(coff)
+            powers.append(power)
+
+        return coffs,powers
+
+
+
+e = RSC("-1*x**4 + -5*x**3 + 7*x")
