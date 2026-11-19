@@ -268,6 +268,19 @@ class SignalFlowGraph(QMainWindow):
             self.animations.append(anim)
 
     def show_gain_input(self):
+
+        src = str(self.selected_nodes[0].number)
+        dest = str(self.selected_nodes[1].number)
+
+        for nodes in self.graph_structure:
+            if nodes[0] == src and nodes[1] == dest:
+                for node in self.selected_nodes:
+                    node.setBrush(QBrush(QColor("#EFF6FF")))
+                    node.setPen(QPen(QColor("#2563EB"), 3))
+
+                self.selected_nodes.clear()
+                return
+
         self.gain_window = QDialog(self)
         self.gain_window.setWindowTitle("Branch Configuration")
         self.gain_window.setFixedSize(300, 150)
