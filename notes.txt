@@ -1,0 +1,14 @@
+develop notes
+python3 -m venv myenv
+source myenv/bin/activate (linux) or myenv\Scripts\activate (windows) 
+pip freeze > requirements.txt (if installed any packages)
+pip install -r requirements.txt (to install packages directly)
+
+edit main.py
+
+someone windows user at end of project package it by:
+pyinstaller --windowed --name control main.py
+
+result will be in dist/control/control.exe
+
+at end zip dist/control folder and we share it
