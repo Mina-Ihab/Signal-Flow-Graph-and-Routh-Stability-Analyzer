@@ -288,6 +288,5 @@ class RouthApp(tk.Tk):
                  f"{numeric_rhp} (tol {TOL:g})  ->  {'MATCH' if ok else 'MISMATCH'}",
             fg="#1b7f3b" if ok else "#b00020")
 
-
 if __name__ == "__main__":
     RouthApp().mainloop()
