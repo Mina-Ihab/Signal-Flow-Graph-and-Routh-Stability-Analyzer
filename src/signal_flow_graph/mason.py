@@ -3,12 +3,12 @@ from .loops import find_individual_loops, find_non_touching_loops
 
 def compute_delta(loops: list[dict], non_touching: dict[int, list[dict]]) -> tuple[float, str]:
     """
-    Computes the graph determinant Δ (or path cofactor Δ_i) and generates
+    Computes the graph determinant Delta (or path cofactor Delta_i) and generates
     a multi-line string showing the symbolic formula, numerical substitution,
     and final calculated value.
     """
     if not loops:
-        return 1.0, "Δ = 1"
+        return 1.0, "Delta = 1"
 
     sum_l1 = sum(lp["total_gain"] for lp in loops)
     delta_val = 1.0 - sum_l1
@@ -36,7 +36,7 @@ def solve_mason(adj: dict[str, list[tuple[str, str, float]]], forward_paths: lis
     """
     Executes Mason's Gain Formula end-to-end:
     1. Finds all individual loops and k non-touching loop combinations.
-    2. Calculates Δ and every forward-path cofactor Δ_i.
+    2. Calculates Delta and every forward-path cofactor Delta_i.
     3. Computes T(s) and formats all intermediate equations for the GUI/report.
     """
     if not forward_paths:
@@ -64,7 +64,7 @@ def solve_mason(adj: dict[str, list[tuple[str, str, float]]], forward_paths: lis
         cofactors.append({
             "label": f"Delta_{idx}",
             "value": di_val,
-            "steps": di_steps.replace("Δ =", f"Δ{idx} ="),
+            "steps": di_steps.replace("Delta =", f"Delta_{idx} ="),
         })
 
         mi_val = path["total_gain"]
