@@ -300,7 +300,7 @@ class SignalFlowGraph(QMainWindow):
         layout.addWidget(self.gain)
         layout.addWidget(add_button)
 
-        self.gain_window.show()
+        self.gain_window.exec()
 
     def draw_edge(self):
 
@@ -458,6 +458,18 @@ class SignalFlowGraph(QMainWindow):
 
         output = []
 
+        # ADDED: Get the multiplication expression of a path
+        def get_gain_expression(nodes):
+            factors = []
+
+            for j in range(len(nodes) - 1):
+                for edge in self.graph_structure:
+                    if edge[0] == nodes[j] and edge[1] == nodes[j + 1]:
+                        factors.append(str(edge[2]))
+                        break
+
+            return " × ".join(factors)
+
         output.append("FORWARD PATHS")
         output.append("-" * 45)
         output.append(
@@ -468,8 +480,11 @@ class SignalFlowGraph(QMainWindow):
             nodes = " → ".join(path["nodes"])
             gain = path["total_gain"]
 
+            # ADDED
+            expression = get_gain_expression(path["nodes"])
+
             output.append(f"Path {i}: {nodes}")
-            output.append(f"Path gain: {gain}\n")
+            output.append(f"Path gain: {expression} = {gain}\n")
 
         output.append("\nINDIVIDUAL LOOPS")
         output.append("-" * 45)
@@ -480,8 +495,17 @@ class SignalFlowGraph(QMainWindow):
             for loop in result["loops"]:
                 nodes = " → ".join(loop["nodes"])
 
+                # ADDED
+                loop_nodes = loop["nodes"]
+                if loop_nodes[0] != loop_nodes[-1]:
+                    loop_nodes = loop_nodes + [loop_nodes[0]]
+
+                expression = get_gain_expression(loop_nodes)
+
                 output.append(f'{loop["label"]}: {nodes}')
-                output.append(f'Loop gain: {loop["total_gain"]}\n')
+                output.append(
+                    f'Loop gain: {expression} = {loop["total_gain"]}\n'
+                )
         else:
             output.append("No closed loops were found in this graph.")
 
@@ -511,7 +535,14 @@ class SignalFlowGraph(QMainWindow):
 
         output.append(result["delta_steps"])
 
-        output.append(f"\nOverall Δ = {result['delta']}")
+        output.append(f"\nOverall Delta = {result['delta']}")
+
+        output.append("\nINDIVIDUAL PATH DELTAS")
+        output.append("-" * 45)
+
+        for cofactor in result["cofactors"]:
+            output.append(f"\n{cofactor['label']}:")
+            output.append(cofactor["steps"])
 
         output.append("\nAPPLYING MASON'S GAIN FORMULA")
         output.append("-" * 45)
