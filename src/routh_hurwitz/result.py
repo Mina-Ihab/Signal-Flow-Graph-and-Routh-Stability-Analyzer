@@ -23,25 +23,35 @@ class result:
         self.poles = np.roots(new_coffs)
 
     def finished(self):
-        self.stability=True
-        self.num_right_poles=0
-        prev=1
+        self.stability = True
+        self.num_right_poles = 0
+        if not self.table or not self.table[0]:
+            return
+        prev = self.table[0][0]
 
         for i in range(len(self.table)):
-            current=self.table[i][0]
+            current = self.table[i][0]
 
-            if current > 0:
-                pass
-            else:
-                if i==len(self.table)-1:
+            if current <= 0:
+                if i == len(self.table) - 1 and current == 0:
+                    self.stability = True
+                    self.note = "marginally stable"
+                else:
+                    self.stability = False
 
-                    self.stability=True
-                    self.note="marginally stable"
-                else :
-                    self.stability=False
+            if prev * current < 0:
+                self.num_right_poles += 1
+            if current != 0:
+                prev = current
 
-            if prev*current<0:
-                self.num_right_poles+=1
-            prev =current
+    @property
+    def stable(self):
+        return self.stability
+
+    @property
+    def rhp_count(self):
+        if self.num_right_poles is not None:
+            return self.num_right_poles
+        return sum(1 for p in self.poles if np.real(p) > 1e-6)
 
 

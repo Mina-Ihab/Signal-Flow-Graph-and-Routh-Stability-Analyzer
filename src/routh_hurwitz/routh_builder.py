@@ -1,4 +1,7 @@
-from result import result
+try:
+    from .result import result
+except (ImportError, ValueError):
+    from result import result
 import math 
 class routh:
     # i assumed that the coffs are ordered from the highest power to the lowest
@@ -18,8 +21,8 @@ class routh:
             return True
         elif n >0 and n!=len(self.coffs):
             self.result.stability=False
-            self.result.note="the system isnt stable as some coffs are negative, no point in calculating the routh table"
-            return False
+            self.result.note="The system has negative coefficients, hence it is unstable."
+            return True
         else :
             return True
 
@@ -43,12 +46,13 @@ class routh:
             if n==0:
                 self.result.note="no thing here "
                 self.result.stability=False
-                return result
+                return self.result
             else:
                 self.result.table=[[self.coffs[0]],[0]]
                 self.result.stability=True
                 self.result.note="marginally stable"
-                return result
+                return self.result
+
             
 
         #building the first 2 rows
@@ -83,8 +87,9 @@ class routh:
 
 
                 except ZeroDivisionError:
-                    self.result.note="a zero was found in the first column "
-                    self.result.stability=False
+                    self.result.note = "A zero was found in the first column (special case)."
+                    self.result.stability = False
+                    self.result.finished()
                     return self.result
             self.pad_wth_zeros(current_row,math.ceil(n/2))
             self.result.add_row(current_row)

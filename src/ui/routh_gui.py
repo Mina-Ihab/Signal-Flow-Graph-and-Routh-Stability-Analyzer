@@ -12,11 +12,22 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from dataclasses import dataclass
 
+import sys
+from pathlib import Path
+
+# Ensure repo root is accessible
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.routh_hurwitz.routh_builder import routh
+from src.routh_hurwitz.result import result
+
 TOL = 1e-6  # tolerance for "real part > 0" on numerically computed poles
 
 
 # ======================================================================
-#  BACKEND ADAPTER  -  the only part to edit when the real solver is finished
+#  BACKEND ADAPTER  -  connects GUI with result.py & routh_builder.py
 # ======================================================================
 @dataclass
 class RouthResult:
@@ -26,22 +37,15 @@ class RouthResult:
     poles: list
 
 
-def run_backend(equation: str) -> RouthResult:
-    # --- REAL BACKEND: adapt these lines to the teammates' names ---
-    # coeffs = RSC(equation).coffs
-    # res = Solver(coeffs).solve()
-    # return RouthResult(res.Table, res.Stability, res.RightPolesNum, res.Poles)
-
-    # --- DEMO BACKEND (delete once the real one is wired in) ---
-    import numpy as np
+def run_backend(equation: str) -> result:
     coeffs = _demo_parse(equation)
-    table = _demo_table(coeffs)
-    changes = _sign_changes([row[0] for row in table])
-    return RouthResult(table, changes == 0, changes, list(np.roots(coeffs)))
+    r = routh(coeffs)
+    res = r.calc()
+    return res
 
 
 def _demo_parse(text):
-    text = text.replace(" ", "").split("=")[0].replace("-", "+-")
+    text = text.replace(" ", "").split("=")[0].replace("**", "^").replace("x", "s").replace("-", "+-")
     coeffs = {}
     for term in filter(None, text.split("+")):
         if "s" in term:
@@ -54,6 +58,7 @@ def _demo_parse(text):
         coeffs[power] = coeffs.get(power, 0.0) + coef
     n = max(coeffs)
     return [coeffs.get(k, 0.0) for k in range(n, -1, -1)]  # descending
+
 
 
 def _demo_table(coeffs):
@@ -106,11 +111,14 @@ def build_steps(table):
         out.append(f"--- Row s^{n - i}  (A = row s^{n - i + 2}, B = row s^{n - i + 1}) ---")
         for j, val in enumerate(table[i]):
             a1, b1 = get(A, j + 1), get(B, j + 1)
-            calc = (b0 * a1 - a0 * b1) / b0
-            line = (f"  entry {j + 1} = ({fmt(b0)} x {fmt(a1)} - {fmt(a0)} x {fmt(b1)}) / {fmt(b0)}"
-                    f" = ({fmt(b0 * a1)} - {fmt(a0 * b1)}) / {fmt(b0)} = {fmt(calc)}")
-            if abs(calc - val) > 1e-6 * max(1, abs(val)):
-                line += f"      !! solver table says {fmt(val)}"
+            if b0 == 0:
+                line = f"  entry {j + 1} = Division by zero (b0 = 0, special case)"
+            else:
+                calc = (b0 * a1 - a0 * b1) / b0
+                line = (f"  entry {j + 1} = ({fmt(b0)} x {fmt(a1)} - {fmt(a0)} x {fmt(b1)}) / {fmt(b0)}"
+                        f" = ({fmt(b0 * a1)} - {fmt(a0 * b1)}) / {fmt(b0)} = {fmt(calc)}")
+                if abs(calc - val) > 1e-6 * max(1, abs(val)):
+                    line += f"      !! solver table says {fmt(val)}"
             out.append(line)
         out.append("")
 
@@ -230,7 +238,10 @@ class RouthApp(tk.Tk):
             return
         self._show_table(res.table)
         self._show_poles(res.poles, res)
-        self._set_steps(build_steps(res.table))
+        steps_text = build_steps(res.table)
+        if getattr(res, "note", None):
+            steps_text = f"Note: {res.note}\n\n" + steps_text
+        self._set_steps(steps_text)
 
     # ---------- display ----------
     def _set_steps(self, text):
@@ -240,6 +251,9 @@ class RouthApp(tk.Tk):
         self.steps.config(state="disabled")
 
     def _show_table(self, table):
+        if not table:
+            self.table.delete(*self.table.get_children())
+            return
         n = len(table) - 1
         width = max(len(r) for r in table)
         cols = ["row"] + [f"c{j + 1}" for j in range(width)]
@@ -276,8 +290,10 @@ class RouthApp(tk.Tk):
             self.poles.insert("", "end", tags=tag,
                               values=(k, f"{p.real:.5f}", f"{p.imag:+.5f}j", loc))
 
-        routh_count = _sign_changes([r[0] for r in res.table])
-        if res.stable and res.rhp_count == 0:
+        routh_count = res.rhp_count
+        if getattr(res, "note", "") == "marginally stable":
+            self.verdict.config(text="MARGINALLY STABLE  -  poles on imaginary axis", fg="#d97706")
+        elif res.stable and res.rhp_count == 0:
             self.verdict.config(text="STABLE  -  0 right-half-plane poles", fg="#1b7f3b")
         else:
             self.verdict.config(
