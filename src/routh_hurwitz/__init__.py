@@ -21,7 +21,7 @@ class RSC :
 
             if splitted[i].find("x") == -1:
                 power = 0
-                coff = float(i)
+                coff = float(splitted[i])
 
             else:
             
