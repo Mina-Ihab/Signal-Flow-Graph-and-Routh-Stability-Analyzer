@@ -53,7 +53,6 @@ class MainGUI(QMainWindow):
 
         self.setWindowTitle("Control Systems Analyzer")
         self.setFixedSize(600, 400)
-        self.routh_window = None
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -77,8 +76,8 @@ class MainGUI(QMainWindow):
             color: #64748B;
         """)
 
-        self.routh_button = QPushButton("Routh Stability Analyzer")
-        self.signal_flow_button = QPushButton("Signal Flow Graph Analyzer")
+        self.routh_button = QPushButton("Routh Hurwitz Stability Analyzer")
+        self.signal_flow_button = QPushButton("Signal Flow Graph Analyzer (Mason Formula)")
 
         layout.addWidget(title)
         layout.addWidget(subtitle)
@@ -86,6 +85,7 @@ class MainGUI(QMainWindow):
         layout.addWidget(self.signal_flow_button)
 
         self.signal_flow_window = None
+        self.routh_window = None
 
         self.signal_flow_button.clicked.connect(
             self.open_signal_flow
@@ -101,8 +101,14 @@ class MainGUI(QMainWindow):
 
     def open_routh(self):
         if self.routh_window is None or self.routh_window.poll() is not None:
-            routh_path = Path(__file__).resolve().parent / "routh_gui.py"
 
-            self.routh_window = subprocess.Popen(
-                [sys.executable, str(routh_path)]
-            )
+            is_frozen = getattr(sys, "frozen", False)
+
+            if is_frozen:
+                command = [sys.executable, "--routh"]
+                project_root = None
+            else:
+                project_root = Path(__file__).resolve().parents[2]
+                command = [sys.executable, "-m", "src.main", "--routh"]
+
+            self.routh_window = subprocess.Popen(command, cwd = project_root)

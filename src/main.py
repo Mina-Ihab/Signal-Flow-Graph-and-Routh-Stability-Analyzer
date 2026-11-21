@@ -1,10 +1,20 @@
+import sys
 from PySide6.QtWidgets import QApplication
-from src.ui.signal_flow_graph_ui import SignalFlowGraph
+from src.ui.main_gui import MainGUI
+from src.ui.routh_gui import RouthApp
 
-app = QApplication()
+def main():
 
-window = SignalFlowGraph()
+    if "--routh" in sys.argv:
+        RouthApp().mainloop()
+        return
 
-window.show()
+    app = QApplication(sys.argv)
 
-app.exec()
+    window = MainGUI()
+    window.show()
+
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
