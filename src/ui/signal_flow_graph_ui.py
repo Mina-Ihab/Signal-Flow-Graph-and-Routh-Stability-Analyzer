@@ -200,6 +200,23 @@ class SignalFlowGraph(QMainWindow):
         self.main_layout.addWidget(self.graph_group, 2)
         self.main_layout.addWidget(self.solution_group, 1)
 
+    def show_error_box(self, title, text):
+        error_box = QDialog(self)
+        error_box.setWindowTitle(title)
+        error_box.setFixedSize(300, 150)
+
+        layout = QVBoxLayout(error_box)
+
+        label = QLabel(text)
+        close_button = QPushButton("OK")
+
+        close_button.clicked.connect(error_box.close)
+
+        layout.addWidget(label)
+        layout.addWidget(close_button)
+
+        error_box.exec()
+
     def generate_graph(self):
         try:
             number = int(self.nodes_number.text())
@@ -207,7 +224,7 @@ class SignalFlowGraph(QMainWindow):
                 raise ValueError
         except ValueError:
             self.nodes_number.clear()
-            self.nodes_number.setPlaceholderText("Only nonzero positive integers.")
+            self.show_error_box("Nodes Number Error", "Only nonzero positive integers are acceptable.")
             return
 
         try:
@@ -216,12 +233,12 @@ class SignalFlowGraph(QMainWindow):
                 raise ValueError
         except ValueError:
             self.goal_input.clear()
-            self.goal_input.setPlaceholderText("Only nonzero positive integers.")
+            self.show_error_box("Goal Number Error", "Only nonzero positive integers are acceptable.")
             return
 
         if self.goal > number:
             self.goal_input.clear()
-            self.goal_input.setPlaceholderText("Goal must be > or = number of nodes.")
+            self.show_error_box("Goal Not Found", "Goal node must be less than or equal to the number of nodes.")
             return
 
         self.scene.clear()
@@ -291,7 +308,7 @@ class SignalFlowGraph(QMainWindow):
 
         label = QLabel("Enter Transfer Function (Gain):")
         self.gain = QLineEdit()
-        self.gain.setPlaceholderText("e.g. 5")
+        self.gain.setPlaceholderText("e.g. 5 or -0.5")
 
         add_button = QPushButton("Add Branch")
         add_button.clicked.connect(self.draw_edge)
@@ -302,12 +319,27 @@ class SignalFlowGraph(QMainWindow):
 
         self.gain_window.exec()
 
+    def draw_curved_edge(self, start_point, end_point, point1, point2):
+        path = QPainterPath(start_point)
+        path.cubicTo(point1, point2, end_point)
+
+        branch = QGraphicsPathItem(path)
+        branch.setPen(QPen(QColor("#000000"), 2))
+
+        self.scene.addItem(branch)
+
+        middle = path.pointAtPercent(0.5)
+        direction = path.pointAtPercent(0.51) - path.pointAtPercent(0.49)
+
+        self.draw_arrowhead(middle, direction)
+
     def draw_edge(self):
 
         try:
             gain = float(self.gain.text())
         except ValueError:
             self.gain_window.close()
+            self.show_error_box("Gain Error", "Gain must be a number.")
 
             for node in self.selected_nodes:
                 node.setBrush(QBrush(QColor("#EFF6FF")))
@@ -329,25 +361,14 @@ class SignalFlowGraph(QMainWindow):
             point1 = QPointF(start.x() - 60, start.y() - 100)
             point2 = QPointF(start.x() + 60, start.y() - 100)
 
-            path = QPainterPath(start)
-            path.cubicTo(point1, point2, end)
-
-            edge = QGraphicsPathItem(path)
-            edge.setPen(QPen(QColor("#64748B"), 2))
-
-            self.scene.addItem(edge)
-
-            middle = path.pointAtPercent(0.5)
-            direction = path.pointAtPercent(0.51) - path.pointAtPercent(0.49)
-
-            self.draw_arrowhead(middle, direction)
+            self.draw_curved_edge(start, end, point1, point2)
         elif dest.number == src.number + 1:
             branch = QGraphicsLineItem(
                 start.x() + 25, start.y(),
                 end.x() - 25, end.y()
             )
 
-            branch.setPen(QPen(QColor("#64748B"), 2))
+            branch.setPen(QPen(QColor("#000000"), 2))
             self.scene.addItem(branch)
 
             middle = (start + end) / 2
@@ -370,18 +391,7 @@ class SignalFlowGraph(QMainWindow):
             curve_start = QPointF(start.x(), start.y() + offset)
             curve_end = QPointF(end.x(), end.y() + offset)
 
-            path = QPainterPath(curve_start)
-            path.cubicTo(point1, point2, curve_end)
-
-            branch = QGraphicsPathItem(path)
-            branch.setPen(QPen(QColor("#64748B"), 2))
-
-            self.scene.addItem(branch)
-
-            middle = path.pointAtPercent(0.5)
-            direction = path.pointAtPercent(0.51) - path.pointAtPercent(0.49)
-
-            self.draw_arrowhead(middle, direction)
+            self.draw_curved_edge(curve_start, curve_end, point1, point2)
 
         self.gain_window.close()
 
@@ -412,16 +422,16 @@ class SignalFlowGraph(QMainWindow):
         )
 
         arrow = QGraphicsPolygonItem(QPolygonF([p1, p2, p3]))
-        arrow.setBrush(QBrush(QColor("#64748B")))
-        arrow.setPen(QPen(QColor("#64748B")))
+        arrow.setBrush(QBrush(QColor("#000000")))
+        arrow.setPen(QPen(QColor("#000000")))
 
         self.scene.addItem(arrow)
-        self.draw_gain(position)
+        self.add_gain_text(position)
 
-    def draw_gain(self, position):
+    def add_gain_text(self, position):
         text = QGraphicsSimpleTextItem(str(self.gain.text()))
 
-        text.setBrush(QBrush(QColor("#1E293B")))
+        text.setBrush(QBrush(QColor("#000000")))
         text.setFont(QFont("Arial", 12, QFont.Weight.Bold))
 
         text.setPos(
@@ -434,7 +444,7 @@ class SignalFlowGraph(QMainWindow):
     def solve(self):
         if not self.graph_structure:
             self.solution_output.setPlainText(
-                "Please add at least one branch before solving the graph."
+                "Please create at least one branch before solving the graph."
             )
             return
 
@@ -458,19 +468,18 @@ class SignalFlowGraph(QMainWindow):
 
         output = []
 
-        # ADDED: Get the multiplication expression of a path
-        def get_gain_expression(nodes):
+        def get_gain_expression(path_nodes):
             factors = []
 
-            for j in range(len(nodes) - 1):
+            for j in range(len(path_nodes) - 1):
                 for edge in self.graph_structure:
-                    if edge[0] == nodes[j] and edge[1] == nodes[j + 1]:
+                    if edge[0] == path_nodes[j] and edge[1] == path_nodes[j + 1]:
                         factors.append(str(edge[2]))
                         break
 
             return " × ".join(factors)
 
-        output.append("FORWARD PATHS")
+        output.append("Forward Path:")
         output.append("-" * 45)
         output.append(
             f"The following paths connect node {source} to node {goal}:\n"
@@ -480,13 +489,12 @@ class SignalFlowGraph(QMainWindow):
             nodes = " → ".join(path["nodes"])
             gain = path["total_gain"]
 
-            # ADDED
             expression = get_gain_expression(path["nodes"])
 
             output.append(f"Path {i}: {nodes}")
             output.append(f"Path gain: {expression} = {gain}\n")
 
-        output.append("\nINDIVIDUAL LOOPS")
+        output.append("\nIndividual Loops:")
         output.append("-" * 45)
 
         if result["loops"]:
@@ -495,7 +503,6 @@ class SignalFlowGraph(QMainWindow):
             for loop in result["loops"]:
                 nodes = " → ".join(loop["nodes"])
 
-                # ADDED
                 loop_nodes = loop["nodes"]
                 if loop_nodes[0] != loop_nodes[-1]:
                     loop_nodes = loop_nodes + [loop_nodes[0]]
@@ -509,7 +516,7 @@ class SignalFlowGraph(QMainWindow):
         else:
             output.append("No closed loops were found in this graph.")
 
-        output.append("\nNON-TOUCHING LOOP COMBINATIONS")
+        output.append("\nNon-Touching Loops Combinations:")
         output.append("-" * 45)
 
         if result["non_touching"]:
@@ -529,7 +536,7 @@ class SignalFlowGraph(QMainWindow):
         else:
             output.append("No non-touching loop combinations were found.")
 
-        output.append("\nOVERALL DELTA")
+        output.append("\nOverall Delta:")
         output.append("-" * 45)
         output.append("Calculating the determinant of the graph:\n")
 
@@ -537,14 +544,14 @@ class SignalFlowGraph(QMainWindow):
 
         output.append(f"\nOverall Delta = {result['delta']}")
 
-        output.append("\nINDIVIDUAL PATH DELTAS")
+        output.append("\nPath Deltas:")
         output.append("-" * 45)
 
         for cofactor in result["cofactors"]:
             output.append(f"\n{cofactor['label']}:")
             output.append(cofactor["steps"])
 
-        output.append("\nAPPLYING MASON'S GAIN FORMULA")
+        output.append("\nMason's Gain Formula:")
         output.append("-" * 45)
         output.append(
             "Combining the forward paths and their corresponding cofactors:\n"
