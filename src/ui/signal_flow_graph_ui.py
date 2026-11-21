@@ -238,7 +238,7 @@ class SignalFlowGraph(QMainWindow):
 
         if self.goal > number:
             self.goal_input.clear()
-            self.show_error_box("Goal Not Found", "Goal node must be < or = to the number of nodes.")
+            self.show_error_box("Goal Not Found", f"Goal node must be in the range [1, {self.nodes_number.text()}].")
             return
 
         self.scene.clear()
