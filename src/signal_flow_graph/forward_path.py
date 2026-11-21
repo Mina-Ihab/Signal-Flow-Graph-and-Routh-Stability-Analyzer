@@ -1,8 +1,8 @@
-def graph_repr(List_edge_nodes: list) -> tuple:
+def graph_repr(list_edge_nodes: list) -> tuple:
     graph = {}
-    source = List_edge_nodes[0][0]
+    source = list_edge_nodes[0][0]
     # [a,b,c] == a->b and c is gain, the end is frm a-> goal
-    for a,b,c in List_edge_nodes:
+    for a,b,c in list_edge_nodes:
         if a not in graph:
             graph[a] = []
         if b is None:
@@ -17,10 +17,10 @@ def graph_repr(List_edge_nodes: list) -> tuple:
 
 # result {'r':[(e1,g1),....],....}
 
-def get_forward_paths(Graph_info: tuple) -> list:
+def get_forward_paths(graph_info: tuple) -> list:
     # result is list of tuples first place have path and second is its gain
     # stack has node and path till now (visited) and gain
-    graph, source, goal = Graph_info
+    graph, source, goal = graph_info
     paths = []
     stack = [(source, [source], 1)]
     while stack:
