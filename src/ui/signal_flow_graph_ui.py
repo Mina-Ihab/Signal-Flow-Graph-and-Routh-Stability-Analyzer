@@ -317,6 +317,11 @@ class SignalFlowGraph(QMainWindow):
         layout.addWidget(self.gain)
         layout.addWidget(add_button)
 
+        self.gain_window.keyPressEvent = lambda event: (
+            event.ignore() if event.key() == Qt.Key.Key_Escape
+            else QDialog.keyPressEvent(self.gain_window, event)
+        )
+
         self.gain_window.exec()
 
     def draw_curved_edge(self, start_point, end_point, point1, point2):
@@ -464,7 +469,11 @@ class SignalFlowGraph(QMainWindow):
             )
             return
 
-        result = solve_mason(graph, forward_paths)
+        try:
+            result = solve_mason(graph, forward_paths)
+        except ValueError as e:
+            self.solution_output.setPlainText(str(e))
+            return
 
         output = []
 
